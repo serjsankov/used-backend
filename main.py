@@ -101,7 +101,13 @@ async def on_shutdown() -> None:
     await close_db_pool()
 
 
-# --- Служебный эндпоинт ---
+# --- Служебные эндпоинты ---
+@app.get("/")
+@app.head("/")
+async def root() -> dict:
+    return {"status": "ok"}
+
 @app.get("/health")
+@app.head("/health")
 async def health() -> dict:
     return {"status": "ok"}
