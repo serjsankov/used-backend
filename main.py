@@ -39,48 +39,56 @@ app.include_router(cars_router, prefix="/cars")  # /cars/ — машины
 async def on_startup() -> None:
     """Инициализация ресурсов при старте приложения."""
     print("🚀 Запуск приложения...")
-    await init_db_pool()
-    # Создаём таблицу cars, если её нет
-    async for db in get_db_conn():
-        await db.execute("""
-            CREATE TABLE IF NOT EXISTS cars (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                brand_id INT NOT NULL,
-                model_id INT NOT NULL,
-                brand_title VARCHAR(255) NOT NULL DEFAULT '',
-                model_title VARCHAR(255) NOT NULL DEFAULT '',
-                car_name VARCHAR(255) NOT NULL,
-                body_type VARCHAR(255) DEFAULT '',
-                seats VARCHAR(255) DEFAULT '',
-                mileage VARCHAR(255) DEFAULT '',
-                engine VARCHAR(255) DEFAULT '',
-                transmission VARCHAR(255) DEFAULT '',
-                drive_type VARCHAR(255) DEFAULT '',
-                fuel_consumption VARCHAR(255) DEFAULT '',
-                acceleration VARCHAR(255) DEFAULT '',
-                year VARCHAR(10) DEFAULT '',
-                color VARCHAR(255) DEFAULT '',
-                photos TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            )
-        """)
-        await db.connection.commit()
-        print("✅ Таблица cars готова")
+    try:
+        await init_db_pool()
+        print("✅ Пул БД инициализирован")
+    except Exception as e:
+        print(f"❌ Ошибка инициализации БД: {e}")
 
-        # Миграция: добавляем новые колонки, если их нет
-        for col in ["body_type", "seats", "mileage", "engine", "transmission", "drive_type", "fuel_consumption", "acceleration", "year", "color"]:
+    try:
+        # Создаём таблицу cars, если её нет
+        async for db in get_db_conn():
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS cars (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    brand_id INT NOT NULL,
+                    model_id INT NOT NULL,
+                    brand_title VARCHAR(255) NOT NULL DEFAULT '',
+                    model_title VARCHAR(255) NOT NULL DEFAULT '',
+                    car_name VARCHAR(255) NOT NULL,
+                    body_type VARCHAR(255) DEFAULT '',
+                    seats VARCHAR(255) DEFAULT '',
+                    mileage VARCHAR(255) DEFAULT '',
+                    engine VARCHAR(255) DEFAULT '',
+                    transmission VARCHAR(255) DEFAULT '',
+                    drive_type VARCHAR(255) DEFAULT '',
+                    fuel_consumption VARCHAR(255) DEFAULT '',
+                    acceleration VARCHAR(255) DEFAULT '',
+                    year VARCHAR(10) DEFAULT '',
+                    color VARCHAR(255) DEFAULT '',
+                    photos TEXT,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                )
+            """)
+            await db.connection.commit()
+            print("✅ Таблица cars готова")
+
+            # Миграция: добавляем новые колонки, если их нет
+            for col in ["body_type", "seats", "mileage", "engine", "transmission", "drive_type", "fuel_consumption", "acceleration", "year", "color"]:
+                try:
+                    await db.execute(f"ALTER TABLE cars ADD COLUMN {col} VARCHAR(255) DEFAULT ''")
+                except Exception:
+                    pass
+            # Удаляем устаревшую колонку characteristics, если есть
             try:
-                await db.execute(f"ALTER TABLE cars ADD COLUMN {col} VARCHAR(255) DEFAULT ''")
+                await db.execute("SELECT characteristics FROM cars LIMIT 1")
+                await db.execute("ALTER TABLE cars DROP COLUMN characteristics")
             except Exception:
-                pass  # колонка уже существует
-        # Удаляем устаревшую колонку characteristics, если есть
-        try:
-            await db.execute("SELECT characteristics FROM cars LIMIT 1")
-            await db.execute("ALTER TABLE cars DROP COLUMN characteristics")
-        except Exception:
-            pass  # колонки нет или уже удалена
-        await db.connection.commit()
+                pass
+            await db.connection.commit()
+    except Exception as e:
+        print(f"⚠️ Миграция БД пропущена: {e}")
 
 
 @app.on_event("shutdown")
