@@ -51,8 +51,8 @@ async def on_startup() -> None:
     try:
         # Получаем соединение напрямую
         async with db.db.pool.acquire() as conn:
-            async with conn.cursor(DictCursor) as db:
-                await db.execute("""
+            async with conn.cursor(DictCursor) as cur:
+                await cur.execute("""
                     CREATE TABLE IF NOT EXISTS cars (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         brand_id INT NOT NULL,
@@ -81,13 +81,13 @@ async def on_startup() -> None:
                 # Миграция: добавляем новые колонки, если их нет
                 for col in ["body_type", "seats", "mileage", "engine", "transmission", "drive_type", "fuel_consumption", "acceleration", "year", "color"]:
                     try:
-                        await db.execute(f"ALTER TABLE cars ADD COLUMN {col} VARCHAR(255) DEFAULT ''")
+                        await cur.execute(f"ALTER TABLE cars ADD COLUMN {col} VARCHAR(255) DEFAULT ''")
                     except Exception:
                         pass
                 # Удаляем устаревшую колонку characteristics, если есть
                 try:
-                    await db.execute("SELECT characteristics FROM cars LIMIT 1")
-                    await db.execute("ALTER TABLE cars DROP COLUMN characteristics")
+                    await cur.execute("SELECT characteristics FROM cars LIMIT 1")
+                    await cur.execute("ALTER TABLE cars DROP COLUMN characteristics")
                 except Exception:
                     pass
                 await conn.commit()
