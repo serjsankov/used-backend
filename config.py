@@ -1,5 +1,5 @@
-# config.py
 import os
+import json
 from dotenv import load_dotenv
 import boto3
 
@@ -18,20 +18,21 @@ ALGORITHM = os.getenv("ALGORITHM")
 TOKEN_EXPIRE_HOURS = int(os.getenv("TOKEN_EXPIRE_HOURS"))
 
 S3_ENDPOINT = os.getenv("S3_ENDPOINT")
-S3_ACCESS_KEY=os.getenv("S3_ACCESS_KEY")
-S3_SECRET_KEY=os.getenv("S3_SECRET_KEY")
+S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY")
+S3_SECRET_KEY = os.getenv("S3_SECRET_KEY")
 
 # --- S3 клиент ---
 S3_CLIENT = boto3.client(
     "s3",
-    endpoint_url=S3_ENDPOINT,          # пример: https://s3.timeweb.cloud
+    endpoint_url=S3_ENDPOINT,
     aws_access_key_id=S3_ACCESS_KEY,
     aws_secret_access_key=S3_SECRET_KEY,
 )
 BUCKET_NAME = os.getenv("S3_BUCKET")
 
-FRONTEND_URLS = [
-    "https://itmastery.ru",     # продакшн
-    "http://localhost:5173",    # локальный фронт
-    "http://127.0.0.1:5173",     # на случай другого хоста
-]
+# --- CORS origins (список через запятую или JSON-массивом) ---
+_raw = os.getenv("FRONTEND_URLS", "http://localhost:5173,http://127.0.0.1:5173")
+if _raw.startswith("["):
+    FRONTEND_URLS = json.loads(_raw)
+else:
+    FRONTEND_URLS = [u.strip() for u in _raw.split(",") if u.strip()]
