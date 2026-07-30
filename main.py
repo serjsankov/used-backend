@@ -3,8 +3,9 @@ import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from db.db import init_db_pool, close_db_pool, get_db_conn, pool
-import aiomysql
+from db.db import init_db_pool, close_db_pool
+import db.db
+from aiomysql import DictCursor
 from config import FRONTEND_URLS
 
 from api.brands import router as brands_router
@@ -49,8 +50,8 @@ async def on_startup() -> None:
 
     try:
         # Получаем соединение напрямую
-        async with pool.acquire() as conn:
-            async with conn.cursor(aiomysql.DictCursor) as db:
+        async with db.db.pool.acquire() as conn:
+            async with conn.cursor(DictCursor) as db:
                 await db.execute("""
                     CREATE TABLE IF NOT EXISTS cars (
                         id INT AUTO_INCREMENT PRIMARY KEY,
