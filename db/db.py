@@ -15,6 +15,10 @@ pool = None
 
 async def init_db_pool():
     global pool
+    ssl_ctx = ssl.create_default_context()
+    ssl_ctx.check_hostname = False
+    ssl_ctx.verify_mode = ssl.CERT_NONE
+
     pool = await aiomysql.create_pool(
         host=DB_HOST,
         port=DB_PORT,
@@ -22,7 +26,7 @@ async def init_db_pool():
         password=DB_PASS,
         db=DB_NAME,
         autocommit=True,
-        ssl={"check_hostname": False, "verify_mode": ssl.CERT_NONE},
+        ssl=ssl_ctx,
     )
 
 async def get_db_conn():
