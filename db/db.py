@@ -20,7 +20,8 @@ async def init_db_pool():
         user=DB_USER,
         password=DB_PASS,
         db=DB_NAME,
-        autocommit=True
+        autocommit=True,
+        ssl=True,
     )
 
 async def get_db_conn():
