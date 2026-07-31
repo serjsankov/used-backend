@@ -41,12 +41,8 @@ app.include_router(cars_router, prefix="/cars")  # /cars/ — машины
 async def on_startup() -> None:
     """Инициализация ресурсов при старте приложения."""
     print("🚀 Запуск приложения...")
-    try:
-        await init_db_pool()
-        print("✅ Пул БД инициализирован")
-    except Exception as e:
-        print(f"❌ Ошибка инициализации БД: {e}")
-        return
+    await init_db_pool()
+    print("✅ Пул БД инициализирован")
 
     try:
         # Получаем соединение напрямую
