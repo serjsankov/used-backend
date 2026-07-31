@@ -1,3 +1,4 @@
+import ssl
 import aiomysql
 from config import DB_USER, DB_PASS, DB_HOST, DB_NAME, DB_PORT
 from dotenv import load_dotenv
@@ -21,7 +22,7 @@ async def init_db_pool():
         password=DB_PASS,
         db=DB_NAME,
         autocommit=True,
-        ssl=True,
+        ssl={"check_hostname": False, "verify_mode": ssl.CERT_NONE},
     )
 
 async def get_db_conn():
